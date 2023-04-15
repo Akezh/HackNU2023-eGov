@@ -1,20 +1,47 @@
+import axios from "axios";
 import type { NextPage } from "next";
+import { useRouter } from "next/router";
 import { SubmitHandler, useForm } from "react-hook-form";
+import { toast } from "react-toastify";
 
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
 
 type IFormInput = {
   role: "courier-users" | "gov-users";
-  login: string;
+  email: string;
   password: string;
 };
 
+const API_URL = "http://localhost:8080/api";
+
 const Login: NextPage = () => {
+  const router = useRouter();
   const { register, handleSubmit } = useForm<IFormInput>();
 
-  const onSubmit: SubmitHandler<IFormInput> = (data) => {
-    console.log(data);
+  const onSubmit: SubmitHandler<IFormInput> = async (data) => {
+    const url =
+      data.role === "courier-users"
+        ? `${API_URL}/courier-users/login`
+        : `${API_URL}/gov-users/login`;
+
+    try {
+      const response = await axios.post(url, {
+        email: data.email,
+        password: data.password,
+      });
+      if (response)
+        toast.success(
+          "Вы успешно вошли в систему. Перенаправляем на страницу трекинга заказов"
+        );
+      setTimeout(() => {
+        router.push("/delivery");
+      }, 2000);
+    } catch (e: unknown) {
+      toast.error(
+        (e as Error).message || "Что-то пошло не так. Попробуйте еще раз"
+      );
+    }
   };
 
   return (
@@ -60,7 +87,7 @@ const Login: NextPage = () => {
                     </label>
                     <input
                       type="text"
-                      {...register("login")}
+                      {...register("email")}
                       className="w-full px-3 py-1 text-base text-gray-700 bg-gray-100 border border-gray-300 rounded outline-none bg-opacity-50 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
                     />
                   </div>
@@ -81,7 +108,10 @@ const Login: NextPage = () => {
                   </div>
                 </div>
                 <div className="w-full p-2 mt-4">
-                  <button className="flex px-8 py-2 mx-auto text-lg text-white bg-indigo-500 border-0 rounded focus:outline-none hover:bg-indigo-600">
+                  <button
+                    type="submit"
+                    className="flex px-8 py-2 mx-auto text-lg text-white bg-indigo-500 border-0 rounded focus:outline-none hover:bg-indigo-600"
+                  >
                     Войти
                   </button>
                 </div>

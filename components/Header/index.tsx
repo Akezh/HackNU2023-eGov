@@ -1,7 +1,14 @@
 import Link from "next/link";
+import { useRouter } from "next/router";
 import React from "react";
 
 export const Header = () => {
+  const router = useRouter();
+
+  const signOut = () => {
+    router.push("/login");
+  };
+
   return (
     <header className="text-gray-600 body-font">
       <div className="container flex flex-col flex-wrap items-center p-5 mx-auto md:flex-row">
@@ -38,7 +45,10 @@ export const Header = () => {
             </span>
           </Link>
         </nav>
-        <button className="inline-flex items-center px-3 py-1 mt-4 text-base bg-gray-100 border-0 rounded focus:outline-none hover:bg-gray-200 md:mt-0">
+        <button
+          onClick={signOut}
+          className="inline-flex items-center px-3 py-1 mt-4 text-base bg-gray-100 border-0 rounded focus:outline-none hover:bg-gray-200 md:mt-0"
+        >
           Выйти
           <svg
             fill="none"
