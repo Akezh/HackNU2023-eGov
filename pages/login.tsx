@@ -6,6 +6,8 @@ import { toast } from "react-toastify";
 
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
+import { useProviderContext } from "../providers/Role";
+import { base } from "../utils";
 
 type IFormInput = {
   role: "courier-users" | "gov-users";
@@ -13,27 +15,46 @@ type IFormInput = {
   password: string;
 };
 
-const API_URL = "http://localhost:8080/api";
+type LoginAxiosResponse = {
+  message: string;
+  token: string;
+  exp: string;
+  user: {
+    id: string;
+    service: string;
+    email: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+};
 
 const Login: NextPage = () => {
   const router = useRouter();
+  const context = useProviderContext();
   const { register, handleSubmit } = useForm<IFormInput>();
 
   const onSubmit: SubmitHandler<IFormInput> = async (data) => {
     const url =
       data.role === "courier-users"
-        ? `${API_URL}/courier-users/login`
-        : `${API_URL}/gov-users/login`;
+        ? `${base}/courier-users/login`
+        : `${base}/gov-users/login`;
+
+    const currentRole =
+      data.role === "courier-users" ? "COURIER" : "GOVERNMENT";
 
     try {
-      const response = await axios.post(url, {
+      const response = await axios.post<LoginAxiosResponse>(url, {
         email: data.email,
         password: data.password,
       });
-      if (response)
-        toast.success(
-          "Вы успешно вошли в систему. Перенаправляем на страницу трекинга заказов"
-        );
+      if (!response?.data.token) throw new Error("Неверный логин или пароль");
+
+      localStorage.setItem("access_token", response.data.token);
+      localStorage.setItem("lastRole", currentRole);
+      context.setRoleState(currentRole);
+      toast.success(
+        "Вы успешно вошли в систему. Перенаправляем на страницу трекинга заказов"
+      );
       setTimeout(() => {
         router.push("/delivery");
       }, 2000);
