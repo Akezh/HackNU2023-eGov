@@ -4,12 +4,17 @@ import "react-toastify/dist/ReactToastify.css";
 import type { AppProps } from "next/app";
 import { ToastContainer } from "react-toastify";
 
+import { ModalProvider } from "../providers";
+import { RoleProvider } from "../providers/Role";
+
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <>
-      <Component {...pageProps} />
-      <ToastContainer />
-    </>
+    <RoleProvider>
+      <ModalProvider>
+        <Component {...pageProps} />
+        <ToastContainer />
+      </ModalProvider>
+    </RoleProvider>
   );
 }
 
