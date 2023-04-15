@@ -5,13 +5,18 @@ type Props = {
   children: React.ReactNode;
 };
 
-type RoleState = "USER" | "COURIER" | "GOVERNMENT";
+type RoleState = {
+  role: "USER" | "COURIER" | "GOVERNMENT";
+  user: Record<string, string>;
+  token: string;
+  loaded: boolean;
+};
 
 export const RoleContext = createContext<{
   state: RoleState;
   setRoleState: (newState: RoleState) => void;
 }>({
-  state: "USER",
+  state: { role: "USER", user: {}, token: "", loaded: false },
   setRoleState: () => null,
 });
 
@@ -20,11 +25,18 @@ export const useProviderContext = () => {
 };
 
 export const RoleProvider: React.FC<Props> = ({ children }) => {
-  const [roleState, setRoleState] = React.useState<RoleState>("USER");
+  const [roleState, setRoleState] = React.useState<RoleState>({
+    role: "USER",
+    user: {},
+    token: "",
+    loaded: false,
+  });
 
   useEffect(() => {
-    const lastRole = (localStorage.getItem("lastRole") as RoleState) || "USER";
-    if (lastRole) setRoleState(lastRole as RoleState);
+    const lastRole = localStorage.getItem("lastRole");
+    if (lastRole) {
+      setRoleState({ ...JSON.parse(lastRole), loaded: true });
+    } else setRoleState((roleState) => ({ ...roleState, loaded: true }));
   }, []);
 
   return (

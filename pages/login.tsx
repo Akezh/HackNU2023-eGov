@@ -5,9 +5,8 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 
 import { Footer } from "../components/Footer";
-import { Header } from "../components/Header";
 import { useProviderContext } from "../providers/Role";
-import { base } from "../utils";
+import { api, base } from "../utils";
 
 type IFormInput = {
   role: "courier-users" | "gov-users";
@@ -49,15 +48,28 @@ const Login: NextPage = () => {
       });
       if (!response?.data.token) throw new Error("Неверный логин или пароль");
 
-      localStorage.setItem("access_token", response.data.token);
-      localStorage.setItem("lastRole", currentRole);
-      context.setRoleState(currentRole);
+      api.defaults.headers.common[
+        "Authorization"
+      ] = `JWT ${response.data.token}`;
+
+      localStorage.setItem(
+        "lastRole",
+        JSON.stringify({
+          role: currentRole,
+          user: response.data.user,
+          token: response.data.token,
+        })
+      );
+      context.setRoleState({
+        role: currentRole,
+        user: response.data.user,
+        token: response.data.token,
+        loaded: true,
+      });
       toast.success(
         "Вы успешно вошли в систему. Перенаправляем на страницу трекинга заказов"
       );
-      setTimeout(() => {
-        router.push("/delivery");
-      }, 2000);
+      router.push("/");
     } catch (e: unknown) {
       toast.error(
         (e as Error).message || "Что-то пошло не так. Попробуйте еще раз"
@@ -67,8 +79,6 @@ const Login: NextPage = () => {
 
   return (
     <>
-      <Header />
-
       <form onSubmit={handleSubmit(onSubmit)}>
         <section className="relative text-gray-600 body-font">
           <div className="container px-5 py-24 mx-auto">

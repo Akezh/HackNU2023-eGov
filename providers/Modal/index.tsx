@@ -22,11 +22,15 @@ interface ProvideSummaryToClient {
     phoneNumber: string;
   };
 }
+
 interface AskOTPFromClient {
   type: "ASK_OTP_FROM_CLIENT";
+  orderId: string;
 }
+
 interface AskOTPFromCourier {
   type: "ASK_OTP_FROM_COURIER";
+  orderId: string;
 }
 
 export const ModalContext = createContext<{

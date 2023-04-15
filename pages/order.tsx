@@ -6,7 +6,6 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 
 import { Footer } from "../components/Footer";
-import { Header } from "../components/Header";
 import { base } from "../utils";
 
 type IFormInput = {
@@ -96,15 +95,14 @@ const Order: NextPage = () => {
 
   return (
     <>
-      <Header />
       <div className="mx-auto max-w-7xl">
         <section className="text-gray-600 body-font">
-          <div className="container flex flex-col items-center px-5 pt-24 mx-auto md:flex-row">
+          <div className="container flex flex-col items-center pt-24 mx-auto md:flex-row">
             <div className="flex flex-col items-center mb-16 text-center lg:flex-grow md:w-1/2 lg:pr-24 md:pr-16 md:items-start md:text-left md:mb-0">
               <h1 className="mb-4 text-3xl font-medium text-gray-900 title-font sm:text-4xl">
                 Вас приветствует сервис доставки документов
               </h1>
-              <p className="mb-8 leading-relaxed">
+              <p className="mb-2 leading-relaxed">
                 Добро пожаловать на наш сайт! Мы - онлайн-сервис доставки
                 государственных документов прямо до дверей клиентов. Наша миссия
                 - сделать получение документов удобным и безопасным. Заказывайте
@@ -132,7 +130,7 @@ const Order: NextPage = () => {
             <div className="w-5/6 lg:max-w-lg lg:w-full md:w-1/2">
               <img
                 className="object-cover object-center rounded shadow-lg"
-                style={{ width: 450, height: 300 }}
+                style={{ width: "100%" }}
                 alt="hero"
                 src="https://cdn.discordapp.com/attachments/1073158756369698878/1096719848236650577/ss_Online_delivery_service_concept_online_order_tracking_delive_21ca1d2c-5af4-4a18-8ee3-0d8e407cff7e.png"
               />
@@ -305,7 +303,7 @@ const Order: NextPage = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col w-full mt-8 bg-white lg:w-1/3 md:w-1/2 md:ml-auto md:py-8 md:mt-0">
+              <div className="flex flex-col w-full mt-8 bg-white lg:w-1/3 md:w-1/2 md:py-8 md:mt-0">
                 <h2 className="mb-1 text-lg font-medium text-gray-900 title-font">
                   Данные для доставки
                 </h2>
