@@ -39,7 +39,7 @@ export const Header = () => {
               Доставка
             </span>
           </Link>
-          <Link href="/delivery">
+          <Link href="/order-traking">
             <span className="mr-5 cursor-pointer hover:text-gray-900">
               Отслеживание статуса
             </span>

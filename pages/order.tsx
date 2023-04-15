@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
+import { base } from "../utils";
 
 type IFormInput = {
   iin: string;
@@ -41,17 +42,34 @@ type AxiosResponse = {
   message: string;
 };
 
-const API_URL = "http://localhost:8080/api";
+const getEgovService = (requestId: string, requestIIN: string) =>
+  `http://89.218.80.61/vshep-api/con-sync-service?requestId=${requestId}&requestIIN=${requestIIN}&token=eyJG6943LMReKj_kqdAVrAiPbpRloAfE1fqp0eVAJ-IChQcV-kv3gW-gBAzWztBEdFY`;
 
 const Order: NextPage = () => {
   const router = useRouter();
-  const { iin: queryIIN, orderId: queryOrderId } = router.query;
+  const { iin: queryIIN, orderid: queryOrderId } = router.query;
   const { setValue, register, handleSubmit } = useForm<IFormInput>();
 
   useEffect(() => {
     if (queryIIN && queryOrderId) {
       setValue("iin", queryIIN as string);
       setValue("orderid", queryOrderId as string);
+
+      const egovServiceUrl = getEgovService(
+        queryOrderId as string,
+        queryIIN as string
+      );
+
+      axios
+        .get(egovServiceUrl)
+        .then((response) => {
+          const { serviceType, organization } = response.data.data;
+          setValue("eGovServiceName", serviceType?.nameRu || "");
+          setValue("eGovBuildingAddress", organization?.nameRu || "");
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     }
   }, [queryIIN, queryOrderId, register, setValue]);
 
@@ -69,7 +87,7 @@ const Order: NextPage = () => {
     };
 
     try {
-      await axios.post<AxiosResponse>(`${API_URL}/orders`, data);
+      await axios.post<AxiosResponse>(`${base}/orders`, data);
       toast.success("Заказ успешно создан, следите за статусом");
     } catch (error) {
       console.log(error);
@@ -181,7 +199,7 @@ const Order: NextPage = () => {
                         disabled
                         type="text"
                         {...register("eGovServiceName")}
-                        className="w-full px-3 py-1 text-base text-gray-700 bg-gray-100 border border-gray-300 rounded outline-none bg-opacity-50 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
+                        className="w-full px-3 py-1 text-base text-gray-700 bg-gray-400 border border-gray-300 rounded outline-none bg-opacity-50 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
                       />
                     </div>
                   </div>
@@ -197,7 +215,7 @@ const Order: NextPage = () => {
                         disabled
                         type="text"
                         {...register("eGovBuildingAddress")}
-                        className="w-full px-3 py-1 text-base text-gray-700 bg-gray-100 border border-gray-300 rounded outline-none bg-opacity-50 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
+                        className="w-full px-3 py-1 text-base text-gray-700 bg-gray-400 border border-gray-300 rounded outline-none bg-opacity-50 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
                       />
                     </div>
                   </div>
@@ -207,9 +225,10 @@ const Order: NextPage = () => {
                         htmlFor="input"
                         className="text-sm text-gray-600 leading-7"
                       >
-                        ФИО пользователя
+                        ФИО пользователя <span className="text-red-500">*</span>
                       </label>
                       <input
+                        required
                         type="text"
                         {...register("myCredentials")}
                         className="w-full px-3 py-1 text-base text-gray-700 bg-gray-100 border border-gray-300 rounded outline-none bg-opacity-50 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
@@ -237,9 +256,10 @@ const Order: NextPage = () => {
                         htmlFor="input"
                         className="text-sm text-gray-600 leading-7"
                       >
-                        Номер телефона
+                        Номер телефона <span className="text-red-500">*</span>
                       </label>
                       <input
+                        required
                         type="text"
                         {...register("phoneNumber")}
                         className="w-full px-3 py-1 text-base text-gray-700 bg-gray-100 border border-gray-300 rounded outline-none bg-opacity-50 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
@@ -311,9 +331,10 @@ const Order: NextPage = () => {
                       htmlFor="input"
                       className="text-sm text-gray-600 leading-7"
                     >
-                      Город
+                      Город <span className="text-red-500">*</span>
                     </label>
                     <input
+                      required
                       type="text"
                       {...register("city")}
                       className="w-full px-3 py-1 text-base text-gray-700 bg-white border border-gray-300 rounded outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
@@ -324,9 +345,10 @@ const Order: NextPage = () => {
                       htmlFor="input"
                       className="text-sm text-gray-600 leading-7"
                     >
-                      Улица
+                      Улица <span className="text-red-500">*</span>
                     </label>
                     <input
+                      required
                       type="text"
                       {...register("street")}
                       className="w-full px-3 py-1 text-base text-gray-700 bg-white border border-gray-300 rounded outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
@@ -337,9 +359,10 @@ const Order: NextPage = () => {
                       htmlFor="input"
                       className="text-sm text-gray-600 leading-7"
                     >
-                      Номер дома
+                      Номер дома <span className="text-red-500">*</span>
                     </label>
                     <input
+                      required
                       type="text"
                       {...register("houseNumber")}
                       className="w-full px-3 py-1 text-base text-gray-700 bg-white border border-gray-300 rounded outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
