@@ -20,8 +20,10 @@ export const orderStatusToString = (status: string) => {
     return "Курьер выбран";
   } else if (status === OrderStatus.COURIER_PICKED_UP) {
     return "Курьер доставляет";
-  } else {
+  } else if (status === OrderStatus.DELIVERED) {
     return "Доставлено";
+  } else {
+    return "Создан";
   }
 };
 

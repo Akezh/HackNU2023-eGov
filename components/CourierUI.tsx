@@ -3,6 +3,7 @@ import { useModalContext, useProviderContext } from "providers";
 import qs from "qs";
 import { useCallback, useEffect, useState } from "react";
 import { api, OrderStatus, orderStatusToString, prettifyAddress } from "utils";
+import { toast } from "react-toastify";
 
 export const CourierUI = () => {
   const [freeOrders, setFreeOrders] = useState<any>(null);
@@ -54,7 +55,9 @@ export const CourierUI = () => {
   const takeOrderFromPool = useCallback(
     async (orderId: string) => {
       await api.post("/take-from-pool", { orderId });
+      toast.success("Заказ взят в работу.");
       fetchFreeOrders();
+      fetchMyOrders();
     },
     [fetchFreeOrders]
   );

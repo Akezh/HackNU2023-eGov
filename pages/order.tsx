@@ -127,7 +127,7 @@ const Order: NextPage = () => {
       navigator.geolocation.getCurrentPosition((position) => {
         const { latitude, longitude } = position.coords;
 
-        const apiUrl = `https://geocode-maps.yandex.ru/1.x/?format=json&apikey=25425f6d-bb09-4bcd-939d-0971f02f567e&geocode=${longitude},${latitude}`;
+        const apiUrl = `https://geocode-maps.yandex.ru/1.x/?format=json&apikey=cc3af3ca-83be-4565-a80e-3ea36c6ef9fe&geocode=${longitude},${latitude}`;
         fetch(apiUrl)
           .then((response) => response.json())
           .then((data) => {
