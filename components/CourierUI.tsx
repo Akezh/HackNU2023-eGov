@@ -2,8 +2,8 @@ import { Spinner } from "components";
 import { useModalContext, useProviderContext } from "providers";
 import qs from "qs";
 import { useCallback, useEffect, useState } from "react";
-import { api, OrderStatus, orderStatusToString, prettifyAddress } from "utils";
 import { toast } from "react-toastify";
+import { api, OrderStatus, orderStatusToString, prettifyAddress } from "utils";
 
 export const CourierUI = () => {
   const [freeOrders, setFreeOrders] = useState<any>(null);
@@ -59,7 +59,7 @@ export const CourierUI = () => {
       fetchFreeOrders();
       fetchMyOrders();
     },
-    [fetchFreeOrders]
+    [fetchFreeOrders, fetchMyOrders]
   );
 
   useEffect(() => {
