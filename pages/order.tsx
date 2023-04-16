@@ -1,12 +1,13 @@
 import axios from "axios";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 
 import { Footer } from "../components/Footer";
-import { base } from "../utils";
+import { MyGeolocationFinder } from "../components/GeoMaps";
+import { base, OrderStatus, orderStatusToString } from "../utils";
 
 type IFormInput = {
   iin: string;
@@ -26,6 +27,8 @@ type IFormInput = {
   buildingSection: string;
   buildingName: string;
   deliveryService: "yandex" | "inDrive" | "uwu";
+  agreeOffer: boolean;
+  agreeConfidentiality: boolean;
 };
 
 type AxiosResponse = {
@@ -41,13 +44,57 @@ type AxiosResponse = {
   message: string;
 };
 
+type AxiosResponseDeliveryStatus = {
+  docs: Array<{
+    id: string;
+    fullName: string;
+    fullDependantName: string;
+    fullAddress: string;
+    deliveryService: string;
+    userIIN: string;
+    serviceName: string;
+    govAddress: string;
+    status: OrderStatus;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  totalDocs: number;
+  limit: number;
+  totalPages: number;
+  page: number;
+  pagingCounter: number;
+  hasPrevPage: boolean;
+  hasNextPage: boolean;
+  prevPage: null;
+  nextPage: null;
+};
+
 const getEgovService = (requestId: string, requestIIN: string) =>
   `http://89.218.80.61/vshep-api/con-sync-service?requestId=${requestId}&requestIIN=${requestIIN}&token=eyJG6943LMReKj_kqdAVrAiPbpRloAfE1fqp0eVAJ-IChQcV-kv3gW-gBAzWztBEdFY`;
 
 const Order: NextPage = () => {
+  const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const router = useRouter();
-  const { iin: queryIIN, orderId: queryOrderId } = router.query;
-  const { setValue, register, handleSubmit } = useForm<IFormInput>();
+  const { iin: queryIIN, orderid: queryOrderId } = router.query;
+  const { getValues, setValue, register, handleSubmit } = useForm<IFormInput>();
+  const [orderData, setOrderData] =
+    useState<AxiosResponseDeliveryStatus | null>(null);
+  const [isOrderStatusLoading, setIsOrderStatusLoading] = useState(false);
+
+  const getDeliveryStatus = useCallback(async () => {
+    try {
+      const { iin, orderid } = getValues();
+      const response = await axios.get<AxiosResponseDeliveryStatus>(
+        `${base}/orders?where[userIIN][equals]=${iin}&where[id][equals]=${orderid}`
+      );
+
+      const curOrderStatus = response.data.docs[0].status;
+      setOrderData(response.data);
+      toast.success(orderStatusToString(curOrderStatus));
+    } catch (e) {
+      console.log(e);
+    }
+  }, [getValues]);
 
   useEffect(() => {
     if (queryIIN && queryOrderId) {
@@ -85,13 +132,18 @@ const Order: NextPage = () => {
       govAddress: formData.eGovBuildingAddress || "Керей-Жанибек Хандар, 4/1",
       phone: formData.phone,
     };
+    setIsOrderStatusLoading(true);
 
     try {
       await axios.post<AxiosResponse>(`${base}/create-order`, data);
       toast.success("Заказ успешно создан, следите за статусом");
+      await getDeliveryStatus();
     } catch (error) {
       console.log(error);
     }
+
+    setIsOrderStatusLoading(false);
+    setIsFormSubmitted(true);
   };
 
   return (
@@ -227,6 +279,7 @@ const Order: NextPage = () => {
                         ФИО пользователя <span className="text-red-500">*</span>
                       </label>
                       <input
+                        disabled={isFormSubmitted}
                         required
                         type="text"
                         {...register("myCredentials")}
@@ -243,6 +296,7 @@ const Order: NextPage = () => {
                         ФИО доверенного лица
                       </label>
                       <input
+                        disabled={isFormSubmitted}
                         type="text"
                         {...register("believerCredentials")}
                         className="w-full px-3 py-1 text-base text-gray-700 bg-gray-100 border border-gray-300 rounded outline-none bg-opacity-50 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
@@ -258,6 +312,7 @@ const Order: NextPage = () => {
                         Номер телефона <span className="text-red-500">*</span>
                       </label>
                       <input
+                        disabled={isFormSubmitted}
                         required
                         type="text"
                         {...register("phone")}
@@ -271,46 +326,14 @@ const Order: NextPage = () => {
           </section>
 
           <section className="relative text-gray-600 body-font">
-            <div className="container flex flex-wrap px-5 pb-16 mx-auto sm:flex-nowrap">
-              <div className="relative flex items-end justify-start p-10 overflow-hidden bg-gray-300 rounded-lg lg:w-2/3 md:w-1/2 sm:mr-10">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  className="absolute inset-0"
-                  title="map"
-                  src="https://maps.google.com/maps?width=100%&height=600&hl=en&q=%C4%B0zmir+(My%20Business%20Name)&ie=UTF8&t=&z=14&iwloc=B&output=embed"
-                ></iframe>
-                <div className="relative flex flex-wrap py-6 bg-white rounded shadow-md">
-                  <div className="px-6 lg:w-1/2">
-                    <h2 className="text-xs font-semibold tracking-widest text-gray-900 title-font">
-                      ADDRESS
-                    </h2>
-                    <p className="mt-1">
-                      Photo booth tattooed prism, portland taiyaki hoodie neutra
-                      typewriter
-                    </p>
-                  </div>
-                  <div className="px-6 mt-4 lg:w-1/2 lg:mt-0">
-                    <h2 className="text-xs font-semibold tracking-widest text-gray-900 title-font">
-                      EMAIL
-                    </h2>
-                    <a className="leading-relaxed text-indigo-500">
-                      example@email.com
-                    </a>
-                    <h2 className="mt-4 text-xs font-semibold tracking-widest text-gray-900 title-font">
-                      PHONE
-                    </h2>
-                    <p className="leading-relaxed">123-456-7890</p>
-                  </div>
-                </div>
+            <div className="container flex flex-wrap px-5 mx-auto sm:flex-nowrap">
+              <div className="relative flex items-center justify-start my-10 overflow-hidden rounded-lg bg-gray-300 lg:w-2/3 md:w-1/2 sm:mr-10">
+                <MyGeolocationFinder />
               </div>
               <div className="flex flex-col w-full mt-8 bg-white lg:w-1/3 md:w-1/2 md:py-8 md:mt-0">
                 <h2 className="mb-1 text-lg font-medium text-gray-900 title-font">
                   Данные для доставки
                 </h2>
-                <p className="mb-5 leading-relaxed text-gray-600">
-                  Post-ironic portland shabby chic echo park, banjo fashion axe
-                </p>
                 <div className="flex flex-wrap -m-2">
                   <div className="w-1/2 p-2">
                     <label
@@ -320,6 +343,7 @@ const Order: NextPage = () => {
                       Область
                     </label>
                     <input
+                      disabled={isFormSubmitted}
                       type="text"
                       {...register("region")}
                       className="w-full px-3 py-1 text-base text-gray-700 bg-white border border-gray-300 rounded outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
@@ -333,6 +357,7 @@ const Order: NextPage = () => {
                       Город <span className="text-red-500">*</span>
                     </label>
                     <input
+                      disabled={isFormSubmitted}
                       required
                       type="text"
                       {...register("city")}
@@ -347,6 +372,7 @@ const Order: NextPage = () => {
                       Улица <span className="text-red-500">*</span>
                     </label>
                     <input
+                      disabled={isFormSubmitted}
                       required
                       type="text"
                       {...register("street")}
@@ -361,13 +387,14 @@ const Order: NextPage = () => {
                       Номер дома <span className="text-red-500">*</span>
                     </label>
                     <input
+                      disabled={isFormSubmitted}
                       required
                       type="text"
                       {...register("houseNumber")}
                       className="w-full px-3 py-1 text-base text-gray-700 bg-white border border-gray-300 rounded outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
                     />
                   </div>
-                  <div className="w-1/2 p-2">
+                  <div className="w-1/3 p-2">
                     <label
                       htmlFor="input"
                       className="text-sm text-gray-600 leading-7"
@@ -375,12 +402,13 @@ const Order: NextPage = () => {
                       Квартира
                     </label>
                     <input
+                      disabled={isFormSubmitted}
                       type="text"
                       {...register("flatNumber")}
                       className="w-full px-3 py-1 text-base text-gray-700 bg-white border border-gray-300 rounded outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
                     />
                   </div>
-                  <div className="w-1/2 p-2">
+                  <div className="w-1/3 p-2">
                     <label
                       htmlFor="input"
                       className="text-sm text-gray-600 leading-7"
@@ -388,12 +416,13 @@ const Order: NextPage = () => {
                       Подъезд
                     </label>
                     <input
+                      disabled={isFormSubmitted}
                       type="text"
                       {...register("entranceNumber")}
                       className="w-full px-3 py-1 text-base text-gray-700 bg-white border border-gray-300 rounded outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
                     />
                   </div>
-                  <div className="w-1/2 p-2">
+                  <div className="w-1/3 p-2">
                     <label
                       htmlFor="input"
                       className="text-sm text-gray-600 leading-7"
@@ -401,6 +430,7 @@ const Order: NextPage = () => {
                       Этаж
                     </label>
                     <input
+                      disabled={isFormSubmitted}
                       type="text"
                       {...register("floorNumber")}
                       className="w-full px-3 py-1 text-base text-gray-700 bg-white border border-gray-300 rounded outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
@@ -414,6 +444,7 @@ const Order: NextPage = () => {
                       Корпус
                     </label>
                     <input
+                      disabled={isFormSubmitted}
                       type="text"
                       {...register("buildingSection")}
                       className="w-full px-3 py-1 text-base text-gray-700 bg-white border border-gray-300 rounded outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
@@ -427,19 +458,21 @@ const Order: NextPage = () => {
                       Название ЖК
                     </label>
                     <input
+                      disabled={isFormSubmitted}
                       type="text"
                       {...register("buildingName")}
                       className="w-full px-3 py-1 text-base text-gray-700 bg-white border border-gray-300 rounded outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
                     />
                   </div>
-                  <div className="w-1/2 p-2">
+                  <div className="w-full p-2">
                     <label
                       htmlFor="input"
                       className="text-sm text-gray-600 leading-7"
                     >
-                      Выберите сервис доставки
+                      Сервис доставки
                     </label>
                     <select
+                      disabled={isFormSubmitted}
                       {...register("deliveryService")}
                       className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 p-2.5"
                     >
@@ -448,21 +481,107 @@ const Order: NextPage = () => {
                       <option value="uwu">UwU</option>
                     </select>
                   </div>
+
+                  <div className="w-full p-2">
+                    <label
+                      htmlFor="input"
+                      className="text-sm text-gray-600 leading-7"
+                    >
+                      Сгенерированный адрес доставки
+                    </label>
+                    <input
+                      disabled={isFormSubmitted}
+                      type="text"
+                      className="w-full px-3 py-1 text-base text-gray-700 bg-white border border-gray-300 rounded outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
+                    />
+                  </div>
+                </div>
+                <div className="mt-3 inline-flex justify-between items-center">
+                  <input
+                    disabled={isFormSubmitted}
+                    required
+                    {...register("agreeOffer")}
+                    type="checkbox"
+                    className="form-checkbox h-5 w-5 text-blue-600"
+                  />
+                  <span className="ml-3 text-xs text-gray-500">
+                    Я принимаю условия публичного договора-оферты
+                  </span>
+                </div>
+                <div className="mt-3 inline-flex justify-between items-center">
+                  <input
+                    disabled={isFormSubmitted}
+                    required
+                    {...register("agreeConfidentiality")}
+                    type="checkbox"
+                    className="form-checkbox h-5 w-5 text-blue-600"
+                  />
+                  <span className="ml-3 text-xs text-gray-500">
+                    Я ознакомлен с политикой конфиденциальности
+                  </span>
                 </div>
                 <button
+                  disabled={isFormSubmitted}
                   type="submit"
                   className="px-6 py-2 mt-6 text-lg text-white bg-yellow-500 border-0 rounded focus:outline-none hover:bg-yellow-600"
                 >
                   Вызвать доставку
                 </button>
-                <p className="mt-3 text-xs text-gray-500">
-                  Chicharrones blog helvetica normcore iceland tousled brook
-                  viral artisan.
-                </p>
               </div>
             </div>
           </section>
         </form>
+
+        {isOrderStatusLoading && (
+          <div className="mb-16 flex justify-center items-center">
+            <img
+              style={{ height: 100, width: 300 }}
+              alt="loader"
+              src="https://miro.medium.com/v2/resize:fit:4800/1*CsJ05WEGfunYMLGfsT2sXA.gif"
+            />
+          </div>
+        )}
+
+        {isFormSubmitted && !isOrderStatusLoading && (
+          <div className="mt-8 mb-16">
+            <p className="text-2xl font-medium mb-7">Инфомация о заказе</p>
+            <div
+              style={{ width: 350 }}
+              className="mb-2 flex justify-between items-center"
+            >
+              <p className="text-md font-medium">Статус заказа:</p>
+              <p className="text-md font-medium text-green-600">
+                {orderStatusToString(orderData?.docs[0].status as string)}
+              </p>
+            </div>
+            <div
+              style={{ width: 350 }}
+              className="mb-2 flex justify-between items-center"
+            >
+              <p className="text-md font-medium">Время создания: </p>
+              <p className="text-md font-medium text-green-600">
+                {orderData?.docs[0].createdAt}
+              </p>
+            </div>
+            <div
+              style={{ width: 350 }}
+              className="mb-2 flex justify-between items-center"
+            >
+              <p className="text-md font-medium">Название сервиса:</p>
+              <p className="text-md font-medium text-green-600">
+                {orderData?.docs[0].serviceName}
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              onClick={getDeliveryStatus}
+              className="px-6 py-2 mt-4 text-lg text-white bg-yellow-500 border-0 rounded focus:outline-none hover:bg-yellow-600"
+            >
+              Обновить статус доставки
+            </button>
+          </div>
+        )}
       </div>
       <Footer />
     </>
