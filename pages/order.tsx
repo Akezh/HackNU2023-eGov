@@ -13,7 +13,12 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 
 import { Footer } from "../components/Footer";
-import { base, OrderStatus, orderStatusToString } from "../utils";
+import {
+  base,
+  calculateDistance,
+  OrderStatus,
+  orderStatusToString,
+} from "../utils";
 
 type IFormInput = {
   iin: string;
@@ -77,30 +82,6 @@ type AxiosResponseDeliveryStatus = {
 
 const getEgovService = (requestId: string, requestIIN: string) =>
   `http://89.218.80.61/vshep-api/con-sync-service?requestId=${requestId}&requestIIN=${requestIIN}&token=eyJG6943LMReKj_kqdAVrAiPbpRloAfE1fqp0eVAJ-IChQcV-kv3gW-gBAzWztBEdFY`;
-
-const calculateDistance = (
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-) => {
-  const R = 6371; // Radius of the earth in km
-  const dLat = deg2rad(lat2 - lat1); // deg2rad below
-  const dLon = deg2rad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(deg2rad(lat1)) *
-      Math.cos(deg2rad(lat2)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = R * c * 1000; // Distance in meters
-  return distance;
-};
-
-const deg2rad = (deg: number) => {
-  return deg * (Math.PI / 180);
-};
 
 const Order: NextPage = () => {
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
