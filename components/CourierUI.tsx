@@ -2,7 +2,7 @@ import { Spinner } from "components";
 import { useModalContext, useProviderContext } from "providers";
 import qs from "qs";
 import { useCallback, useEffect, useState } from "react";
-import { api, OrderStatus, orderStatusToString } from "utils";
+import { api, OrderStatus, orderStatusToString, prettifyAddress } from "utils";
 
 export const CourierUI = () => {
   const [freeOrders, setFreeOrders] = useState<any>(null);
@@ -112,7 +112,7 @@ export const CourierUI = () => {
                     scope="row"
                     className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
                   >
-                    {row.fullAddress}
+                    {prettifyAddress(row.fullAddress)}
                   </th>
                   <th
                     scope="row"
@@ -197,7 +197,7 @@ export const CourierUI = () => {
                     scope="row"
                     className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
                   >
-                    {row.fullAddress}
+                    {prettifyAddress(row.fullAddress)}
                   </th>
                   <th
                     scope="row"
@@ -233,8 +233,3 @@ export const CourierUI = () => {
     </div>
   );
 };
-
-/*
-First table: orders without attached courier && selectedDeliveryService = my delivery service
-Second table: orders with attached courier as me
-*/

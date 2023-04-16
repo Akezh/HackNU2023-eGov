@@ -2,7 +2,7 @@ import { Spinner } from "components";
 import { useModalContext, useProviderContext } from "providers";
 import qs from "qs";
 import { useCallback, useEffect, useState } from "react";
-import { api, OrderStatus, orderStatusToString } from "utils";
+import { api, OrderStatus, orderStatusToString, prettifyAddress } from "utils";
 
 export const GovUI = () => {
   const [myOrders, setMyOrders] = useState<any>(null);
@@ -89,7 +89,7 @@ export const GovUI = () => {
                     scope="row"
                     className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
                   >
-                    {row.fullAddress}
+                    {prettifyAddress(row.fullAddress)}
                   </th>
                   <th
                     scope="row"

@@ -24,3 +24,11 @@ export const orderStatusToString = (status: string) => {
     return "Доставлено";
   }
 };
+
+export const prettifyAddress = (address: string) => {
+  return address
+    .split(",")
+    .filter((x) => x.trim().length > 0)
+    .map((x) => x.trim())
+    .join(", ");
+};
