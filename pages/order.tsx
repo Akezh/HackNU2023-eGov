@@ -15,7 +15,7 @@ type IFormInput = {
   eGovBuildingAddress: string;
   myCredentials: string;
   believerCredentials: string;
-  phoneNumber: string;
+  phone: string;
   region: string;
   city: string;
   street: string;
@@ -25,7 +25,7 @@ type IFormInput = {
   floorNumber: string;
   buildingSection: string;
   buildingName: string;
-  deliveryService: "yandex" | "kaspi" | "exline";
+  deliveryService: "yandex" | "inDrive" | "uwu";
 };
 
 type AxiosResponse = {
@@ -46,19 +46,19 @@ const getEgovService = (requestId: string, requestIIN: string) =>
 
 const Order: NextPage = () => {
   const router = useRouter();
-  const { iin: queryIIN, orderid: queryOrderId } = router.query;
+  const { iin: queryIIN, orderId: queryOrderId } = router.query;
   const { setValue, register, handleSubmit } = useForm<IFormInput>();
 
   useEffect(() => {
     if (queryIIN && queryOrderId) {
+      console.log(queryIIN, queryOrderId);
+
       setValue("iin", queryIIN as string);
       setValue("orderid", queryOrderId as string);
-
       const egovServiceUrl = getEgovService(
         queryOrderId as string,
         queryIIN as string
       );
-
       axios
         .get(egovServiceUrl)
         .then((response) => {
@@ -79,14 +79,15 @@ const Order: NextPage = () => {
       fullName: formData.myCredentials,
       fullDependantName: formData.believerCredentials,
       fullAddress,
-      deliveryService: "yandex",
+      deliveryService: formData.deliveryService,
       userIIN: formData.iin,
       serviceName: formData.eGovServiceName,
-      govAddress: formData.eGovBuildingAddress,
+      govAddress: formData.eGovBuildingAddress || "Керей-Жанибек Хандар, 4/1",
+      phone: formData.phone,
     };
 
     try {
-      await axios.post<AxiosResponse>(`${base}/orders`, data);
+      await axios.post<AxiosResponse>(`${base}/create-order`, data);
       toast.success("Заказ успешно создан, следите за статусом");
     } catch (error) {
       console.log(error);
@@ -259,7 +260,7 @@ const Order: NextPage = () => {
                       <input
                         required
                         type="text"
-                        {...register("phoneNumber")}
+                        {...register("phone")}
                         className="w-full px-3 py-1 text-base text-gray-700 bg-gray-100 border border-gray-300 rounded outline-none bg-opacity-50 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
                       />
                     </div>
@@ -443,8 +444,8 @@ const Order: NextPage = () => {
                       className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 p-2.5"
                     >
                       <option value="yandex">Yandex</option>
-                      <option value="kaspi">Kaspi</option>
-                      <option value="exline">Exline</option>
+                      <option value="inDrive">inDrive</option>
+                      <option value="uwu">UwU</option>
                     </select>
                   </div>
                 </div>

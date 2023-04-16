@@ -118,7 +118,7 @@ export const CourierUI = () => {
                     scope="row"
                     className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
                   >
-                    {row.fullAddress}
+                    {row.govAddress}
                   </th>
                   <th
                     scope="row"
@@ -203,7 +203,7 @@ export const CourierUI = () => {
                     scope="row"
                     className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
                   >
-                    {row.fullAddress}
+                    {row.govAddress}
                   </th>
                   <th
                     scope="row"
