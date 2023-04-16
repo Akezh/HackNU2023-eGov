@@ -12,7 +12,7 @@ export const GovUI = () => {
     setMyOrders(null);
     const query = {
       status: {
-        not_equals: OrderStatus.DELIVERED,
+        not_equals: OrderStatus.STALE,
       },
     };
 
