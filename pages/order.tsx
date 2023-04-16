@@ -1,9 +1,3 @@
-import axios from "axios";
-import type { NextPage } from "next";
-import { useRouter } from "next/router";
-import React, { useCallback, useEffect, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { toast } from "react-toastify";
 import {
   GeolocationControl,
   Map,
@@ -11,6 +5,12 @@ import {
   Polyline,
   YMaps,
 } from "@pbe/react-yandex-maps";
+import axios from "axios";
+import type { NextPage } from "next";
+import { useRouter } from "next/router";
+import React, { useCallback, useEffect, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { toast } from "react-toastify";
 
 import { Footer } from "../components/Footer";
 import { base, OrderStatus, orderStatusToString } from "../utils";
@@ -110,10 +110,6 @@ const Order: NextPage = () => {
   const [orderData, setOrderData] =
     useState<AxiosResponseDeliveryStatus | null>(null);
   const [isOrderStatusLoading, setIsOrderStatusLoading] = useState(false);
-  const [center, setCenter] = useState([51.0904356, 71.3952538]);
-  const [govBuildingCoords, setGovBuildingCoords] = useState([
-    51.1294167, 71.3960702,
-  ]);
   const [addressFromYandex, setAddressFromYandex] = useState("");
   const [customPath, setCustomPath] = useState([
     [51.0904356, 71.3952538],
@@ -123,12 +119,13 @@ const Order: NextPage = () => {
     [51.1294167, 71.3960702],
   ]); // this is mocked path from NU to gov building. should be replaced with real path
   const [price, setPrice] = useState(0);
+  const center = [51.0904356, 71.3952538];
+  const govBuildingCoords = [51.1294167, 71.3960702];
 
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((position) => {
         const { latitude, longitude } = position.coords;
-        setCenter([latitude, longitude]);
 
         const apiUrl = `https://geocode-maps.yandex.ru/1.x/?format=json&apikey=25425f6d-bb09-4bcd-939d-0971f02f567e&geocode=${longitude},${latitude}`;
         fetch(apiUrl)
@@ -155,7 +152,7 @@ const Order: NextPage = () => {
     } else {
       console.log("Geolocation is not supported by this browser.");
     }
-  }, [center, govBuildingCoords]);
+  }, []);
 
   useEffect(() => {
     if (queryIIN && queryOrderId) {
@@ -401,9 +398,9 @@ const Order: NextPage = () => {
 
           <section className="relative text-gray-600 body-font">
             <div className="container flex flex-wrap px-5 mx-auto sm:flex-nowrap">
-              <div className="relative flex items-center justify-start my-10 overflow-hidden rounded-lg bg-gray-300 lg:w-2/3 md:w-1/2 sm:mr-10">
+              <div className="relative flex items-center justify-start my-10 overflow-hidden bg-gray-300 rounded-lg lg:w-2/3 md:w-1/2 sm:mr-10">
                 <YMaps
-                  query={{ apikey: "25425f6d-bb09-4bcd-939d-0971f02f567e" }}
+                  query={{ apikey: "cc3af3ca-83be-4565-a80e-3ea36c6ef9fe" }}
                 >
                   <Map
                     style={{ width: "100%", height: "100%" }}
@@ -600,25 +597,25 @@ const Order: NextPage = () => {
                     />
                   </div>
                 </div>
-                <div className="mt-3 inline-flex justify-between items-center">
+                <div className="inline-flex items-center justify-between mt-3">
                   <input
                     disabled={isFormSubmitted}
                     required
                     {...register("agreeOffer")}
                     type="checkbox"
-                    className="form-checkbox h-5 w-5 text-blue-600"
+                    className="w-5 h-5 text-blue-600 form-checkbox"
                   />
                   <span className="ml-3 text-xs text-gray-500">
                     Я принимаю условия публичного договора-оферты
                   </span>
                 </div>
-                <div className="mt-3 inline-flex justify-between items-center">
+                <div className="inline-flex items-center justify-between mt-3">
                   <input
                     disabled={isFormSubmitted}
                     required
                     {...register("agreeConfidentiality")}
                     type="checkbox"
-                    className="form-checkbox h-5 w-5 text-blue-600"
+                    className="w-5 h-5 text-blue-600 form-checkbox"
                   />
                   <span className="ml-3 text-xs text-gray-500">
                     Я ознакомлен с политикой конфиденциальности
@@ -637,7 +634,7 @@ const Order: NextPage = () => {
         </form>
 
         {isOrderStatusLoading && (
-          <div className="mb-16 flex justify-center items-center">
+          <div className="flex items-center justify-center mb-16">
             <img
               style={{ height: 100, width: 300 }}
               alt="loader"
@@ -651,19 +648,19 @@ const Order: NextPage = () => {
             <p className="text-2xl font-medium mb-7">Инфомация о заказе</p>
             <div
               style={{ width: 500 }}
-              className="mb-2 flex justify-between items-center gap-2"
+              className="flex items-center justify-between mb-2 gap-2"
             >
-              <p className="text-md font-medium">Статус заказа:</p>
-              <p className="text-md font-medium text-green-600 text-end">
+              <p className="font-medium text-md">Статус заказа:</p>
+              <p className="font-medium text-green-600 text-md text-end">
                 {orderStatusToString(orderData?.docs[0].status as string)}
               </p>
             </div>
             <div
               style={{ width: 500 }}
-              className="mb-2 flex justify-between items-center gap-2"
+              className="flex items-center justify-between mb-2 gap-2"
             >
-              <p className="text-md font-medium">Время создания: </p>
-              <p className="text-md font-medium text-green-600 text-end">
+              <p className="font-medium text-md">Время создания: </p>
+              <p className="font-medium text-green-600 text-md text-end">
                 {new Date(
                   orderData?.docs[0].createdAt || Date.now()
                 ).toLocaleString()}
@@ -671,10 +668,10 @@ const Order: NextPage = () => {
             </div>
             <div
               style={{ width: 500 }}
-              className="mb-2 flex justify-between items-center gap-2"
+              className="flex items-center justify-between mb-2 gap-2"
             >
-              <p className="text-md font-medium">Название сервиса:</p>
-              <p className="text-md font-medium text-green-600 text-end">
+              <p className="font-medium text-md">Название сервиса:</p>
+              <p className="font-medium text-green-600 text-md text-end">
                 {orderData?.docs[0].serviceName}
               </p>
             </div>
