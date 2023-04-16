@@ -62,6 +62,18 @@ export const CourierUI = () => {
     [fetchFreeOrders, fetchMyOrders]
   );
 
+  const rejectOrder = useCallback(
+    async (orderId: string) => {
+      await api.post("/reject-order", { orderId });
+      toast.success(
+        "Вы успешно отказались от заказа. Пользователь будет уведомлен."
+      );
+      fetchFreeOrders();
+      fetchMyOrders();
+    },
+    [fetchFreeOrders, fetchMyOrders]
+  );
+
   useEffect(() => {
     fetchFreeOrders();
     fetchMyOrders();
@@ -134,7 +146,14 @@ export const CourierUI = () => {
                     className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
                   >
                     <button
-                      className="px-4 py-2 text-white bg-green-500 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
+                      className="px-4 py-2 text-white bg-red-500 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
+                      onClick={() => rejectOrder(row.id)}
+                      disabled={row.status !== OrderStatus.COURIER_SELECTED}
+                    >
+                      Отказаться
+                    </button>
+                    <button
+                      className="px-4 py-2 ml-3 text-white bg-green-500 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
                       onClick={() =>
                         modalData.setModalState({
                           type: "ASK_OTP_FROM_CLIENT",
