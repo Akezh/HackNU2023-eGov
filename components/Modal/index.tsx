@@ -26,6 +26,7 @@ export const Modal: React.FC = () => {
         });
         toast.success("Заказ успешно доставлен.");
         setModalState({ type: "NO_MODAL" });
+        window.location.reload();
       } catch (_) {
         toast.error("Похоже что OTP введен неверный.");
       }
@@ -37,6 +38,7 @@ export const Modal: React.FC = () => {
         });
         toast.success("Заказ успешно отдан курьеру.");
         setModalState({ type: "NO_MODAL" });
+        window.location.reload();
       } catch (_) {
         toast.error("Похоже что OTP введен неверный.");
       }
