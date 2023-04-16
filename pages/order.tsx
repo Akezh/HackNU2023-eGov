@@ -152,6 +152,7 @@ const Order: NextPage = () => {
     } else {
       console.log("Geolocation is not supported by this browser.");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
