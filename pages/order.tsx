@@ -1,12 +1,18 @@
 import axios from "axios";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import {
+  GeolocationControl,
+  Map,
+  Placemark,
+  Polyline,
+  YMaps,
+} from "@pbe/react-yandex-maps";
 
 import { Footer } from "../components/Footer";
-import { MyGeolocationFinder } from "../components/GeoMaps";
 import { base, OrderStatus, orderStatusToString } from "../utils";
 
 type IFormInput = {
@@ -72,6 +78,30 @@ type AxiosResponseDeliveryStatus = {
 const getEgovService = (requestId: string, requestIIN: string) =>
   `http://89.218.80.61/vshep-api/con-sync-service?requestId=${requestId}&requestIIN=${requestIIN}&token=eyJG6943LMReKj_kqdAVrAiPbpRloAfE1fqp0eVAJ-IChQcV-kv3gW-gBAzWztBEdFY`;
 
+const calculateDistance = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+) => {
+  const R = 6371; // Radius of the earth in km
+  const dLat = deg2rad(lat2 - lat1); // deg2rad below
+  const dLon = deg2rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) *
+      Math.cos(deg2rad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c * 1000; // Distance in meters
+  return distance;
+};
+
+const deg2rad = (deg: number) => {
+  return deg * (Math.PI / 180);
+};
+
 const Order: NextPage = () => {
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const router = useRouter();
@@ -80,26 +110,55 @@ const Order: NextPage = () => {
   const [orderData, setOrderData] =
     useState<AxiosResponseDeliveryStatus | null>(null);
   const [isOrderStatusLoading, setIsOrderStatusLoading] = useState(false);
+  const [center, setCenter] = useState([51.0904356, 71.3952538]);
+  const [govBuildingCoords, setGovBuildingCoords] = useState([
+    51.1294167, 71.3960702,
+  ]);
+  const [addressFromYandex, setAddressFromYandex] = useState("");
+  const [customPath, setCustomPath] = useState([
+    [51.0904356, 71.3952538],
+    [51.091197, 71.392013],
+    [51.127035, 71.404736],
+    [51.128159, 71.395819],
+    [51.1294167, 71.3960702],
+  ]); // this is mocked path from NU to gov building. should be replaced with real path
+  const [price, setPrice] = useState(0);
 
-  const getDeliveryStatus = useCallback(async () => {
-    try {
-      const { iin, orderid } = getValues();
-      const response = await axios.get<AxiosResponseDeliveryStatus>(
-        `${base}/orders?where[userIIN][equals]=${iin}&where[id][equals]=${orderid}`
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const { latitude, longitude } = position.coords;
+        setCenter([latitude, longitude]);
+
+        const apiUrl = `https://geocode-maps.yandex.ru/1.x/?format=json&apikey=25425f6d-bb09-4bcd-939d-0971f02f567e&geocode=${longitude},${latitude}`;
+        fetch(apiUrl)
+          .then((response) => response.json())
+          .then((data) => {
+            const address =
+              data.response.GeoObjectCollection.featureMember[0].GeoObject.name;
+            setAddressFromYandex(address);
+          })
+          .catch((error) => {
+            console.error("Error fetching address:", error);
+          });
+      });
+
+      const distance = calculateDistance(
+        center[0],
+        center[1],
+        govBuildingCoords[0],
+        govBuildingCoords[1]
       );
-
-      const curOrderStatus = response.data.docs[0].status;
-      setOrderData(response.data);
-      toast.success(orderStatusToString(curOrderStatus));
-    } catch (e) {
-      console.log(e);
+      const basePrice = 200; // Base price per km
+      const yandexPrice = Math.round(500 + basePrice * (distance / 1000)); // Price in rubles
+      setPrice(yandexPrice);
+    } else {
+      console.log("Geolocation is not supported by this browser.");
     }
-  }, [getValues]);
+  }, [center, govBuildingCoords]);
 
   useEffect(() => {
     if (queryIIN && queryOrderId) {
-      console.log(queryIIN, queryOrderId);
-
       setValue("iin", queryIIN as string);
       setValue("orderid", queryOrderId as string);
       const egovServiceUrl = getEgovService(
@@ -118,6 +177,21 @@ const Order: NextPage = () => {
         });
     }
   }, [queryIIN, queryOrderId, register, setValue]);
+
+  const getDeliveryStatus = useCallback(async () => {
+    try {
+      const { iin, orderid } = getValues();
+      const response = await axios.get<AxiosResponseDeliveryStatus>(
+        `${base}/orders?where[userIIN][equals]=${iin}&where[id][equals]=${orderid}`
+      );
+
+      const curOrderStatus = response.data.docs[0].status;
+      setOrderData(response.data);
+      toast.success(orderStatusToString(curOrderStatus));
+    } catch (e) {
+      console.log(e);
+    }
+  }, [getValues]);
 
   const onSubmit: SubmitHandler<IFormInput> = async (formData) => {
     const fullAddress = `${formData.region}, ${formData.city}, ${formData.street}, ${formData.houseNumber}, ${formData.flatNumber}, ${formData.entranceNumber}, ${formData.floorNumber}, ${formData.buildingSection}, ${formData.buildingName}`;
@@ -328,7 +402,22 @@ const Order: NextPage = () => {
           <section className="relative text-gray-600 body-font">
             <div className="container flex flex-wrap px-5 mx-auto sm:flex-nowrap">
               <div className="relative flex items-center justify-start my-10 overflow-hidden rounded-lg bg-gray-300 lg:w-2/3 md:w-1/2 sm:mr-10">
-                <MyGeolocationFinder />
+                <YMaps
+                  query={{ apikey: "25425f6d-bb09-4bcd-939d-0971f02f567e" }}
+                >
+                  <Map
+                    style={{ width: "100%", height: "100%" }}
+                    defaultState={{ center, zoom: 15 }}
+                  >
+                    <GeolocationControl options={{ float: "right" }} />
+                    <Placemark geometry={govBuildingCoords} />
+                    <Placemark geometry={center} />
+                    <Polyline
+                      geometry={customPath}
+                      options={{ strokeWidth: 3 }}
+                    />
+                  </Map>
+                </YMaps>
               </div>
               <div className="flex flex-col w-full mt-8 bg-white lg:w-1/3 md:w-1/2 md:py-8 md:mt-0">
                 <h2 className="mb-1 text-lg font-medium text-gray-900 title-font">
@@ -482,7 +571,7 @@ const Order: NextPage = () => {
                     </select>
                   </div>
 
-                  <div className="w-full p-2">
+                  <div className="w-2/3 p-2">
                     <label
                       htmlFor="input"
                       className="text-sm text-gray-600 leading-7"
@@ -491,6 +580,21 @@ const Order: NextPage = () => {
                     </label>
                     <input
                       disabled={isFormSubmitted}
+                      value={addressFromYandex}
+                      type="text"
+                      className="w-full px-3 py-1 text-base text-gray-700 bg-white border border-gray-300 rounded outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
+                    />
+                  </div>
+                  <div className="w-1/3 p-2">
+                    <label
+                      htmlFor="input"
+                      className="text-sm text-gray-600 leading-7"
+                    >
+                      Стоимость
+                    </label>
+                    <input
+                      disabled
+                      value={`${price} тенге`}
                       type="text"
                       className="w-full px-3 py-1 text-base text-gray-700 bg-white border border-gray-300 rounded outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 leading-8 transition-colors duration-200 ease-in-out"
                     />
@@ -546,29 +650,31 @@ const Order: NextPage = () => {
           <div className="mt-8 mb-16">
             <p className="text-2xl font-medium mb-7">Инфомация о заказе</p>
             <div
-              style={{ width: 350 }}
-              className="mb-2 flex justify-between items-center"
+              style={{ width: 500 }}
+              className="mb-2 flex justify-between items-center gap-2"
             >
               <p className="text-md font-medium">Статус заказа:</p>
-              <p className="text-md font-medium text-green-600">
+              <p className="text-md font-medium text-green-600 text-end">
                 {orderStatusToString(orderData?.docs[0].status as string)}
               </p>
             </div>
             <div
-              style={{ width: 350 }}
-              className="mb-2 flex justify-between items-center"
+              style={{ width: 500 }}
+              className="mb-2 flex justify-between items-center gap-2"
             >
               <p className="text-md font-medium">Время создания: </p>
-              <p className="text-md font-medium text-green-600">
-                {orderData?.docs[0].createdAt}
+              <p className="text-md font-medium text-green-600 text-end">
+                {new Date(
+                  orderData?.docs[0].createdAt || Date.now()
+                ).toLocaleString()}
               </p>
             </div>
             <div
-              style={{ width: 350 }}
-              className="mb-2 flex justify-between items-center"
+              style={{ width: 500 }}
+              className="mb-2 flex justify-between items-center gap-2"
             >
               <p className="text-md font-medium">Название сервиса:</p>
-              <p className="text-md font-medium text-green-600">
+              <p className="text-md font-medium text-green-600 text-end">
                 {orderData?.docs[0].serviceName}
               </p>
             </div>
