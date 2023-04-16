@@ -24,7 +24,7 @@ yarn dev
 
 После выполнения этих команд, Вы сможете пройти в UI по адресу `http://localhost:3000`.
 
-###Layouts
+### Layouts
 <p>Order page</p>
 <img width="600" alt="Screenshot 2023-04-16 at 16 10 03" src="https://user-images.githubusercontent.com/39896828/232293562-8895e84d-1cd1-4fdc-80a2-8c100e858c6b.png">
 
